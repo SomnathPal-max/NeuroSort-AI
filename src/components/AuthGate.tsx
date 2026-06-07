@@ -26,7 +26,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relatve overflow-hidden">
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
         {/* Background elements */}
         <div className="absolute top-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
            <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-500 rounded-full blur-[100px]" />
