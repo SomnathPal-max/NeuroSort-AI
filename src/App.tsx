@@ -917,32 +917,32 @@ export default function App() {
       <input type="file" multiple webkitdirectory="true" className="hidden" ref={folderInputRef} onChange={handleFileUpload} />
 
       {/* Header Section */}
-      <header className="flex flex-wrap items-center justify-between border-b border-slate-800/80 pb-6 mb-8 gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-500 shadow-xl shadow-sky-500/20 flex items-center justify-center">
-             <Brain className="text-pink-300 w-8 h-8 fill-pink-300"/>
+      <header className="flex flex-col xl:flex-row items-start xl:items-center justify-between border-b border-slate-800/80 pb-6 mb-8 gap-6">
+        <div className="flex items-start sm:items-center gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-500 shadow-xl shadow-sky-500/20 flex items-center justify-center">
+             <Brain className="text-pink-300 w-6 h-6 sm:w-8 sm:h-8 fill-pink-300"/>
           </div>
           <div className="flex flex-col">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-extrabold tracking-tight text-sky-400 flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-sky-400 flex items-center gap-2 sm:gap-3">
                 NeuroSort AI
               </h1>
-              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 uppercase tracking-widest hidden sm:inline-block">JISCE</span>
+              <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 uppercase tracking-widest inline-block">JISCE</span>
             </div>
-            <span className="text-sm font-medium text-slate-400 tracking-wide flex items-center gap-2 mt-1">
-              🎓 B.Tech CSE 2nd Semester Project <span className="text-slate-500">[ Batch: 2025-29 ]</span>
+            <span className="text-xs sm:text-sm font-medium text-slate-400 tracking-wide flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
+              <span>🎓 B.Tech CSE 2nd Semester Project</span> <span className="text-slate-500 whitespace-nowrap">[ Batch: 2025-29 ]</span>
             </span>
           </div>
         </div>
-        <div className="flex flex-wrap gap-4 xl:gap-5 text-sm font-medium text-slate-400 items-center justify-end flex-grow">
-          <div className="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 shadow-sm transition-colors hover:border-slate-700">
-            <span className="text-slate-300 font-semibold tracking-wide text-xs uppercase">Live Sort</span>
+        <div className="flex flex-wrap gap-3 sm:gap-4 xl:gap-5 text-sm font-medium text-slate-400 items-center justify-start xl:justify-end w-full xl:w-auto flex-grow">
+          <div className="flex items-center gap-2 sm:gap-3 bg-slate-900/80 px-2 sm:px-4 py-2 rounded-xl border border-slate-800 shadow-sm transition-colors hover:border-slate-700 w-full sm:w-auto overflow-hidden">
+            <span className="text-slate-300 font-semibold tracking-wide text-[10px] sm:text-xs uppercase shrink-0">Live Sort</span>
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => setIsLiveCategorization(!isLiveCategorization)}
-                className={`w-10 h-5 rounded-full flex items-center p-0.5 transition-colors focus:outline-none shadow-inner ${isLiveCategorization ? 'bg-indigo-500' : 'bg-slate-700'}`}
+                className={`w-8 h-4 sm:w-10 sm:h-5 rounded-full flex items-center p-0.5 transition-colors focus:outline-none shadow-inner ${isLiveCategorization ? 'bg-indigo-500' : 'bg-slate-700'}`}
               >
-                <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isLiveCategorization ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-white transition-transform ${isLiveCategorization ? 'translate-x-[16px] sm:translate-x-5' : 'translate-x-0'}`}></div>
               </button>
               {isProcessingFiles && (
                 <div className="w-2 h-2 ml-1 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
@@ -950,45 +950,45 @@ export default function App() {
             </div>
           </div>
           {!isLiveCategorization && files.some(f => f.category === 'Pending') && (
-            <button onClick={manualCategorize} className="px-4 py-2.5 bg-purple-600/20 text-purple-400 border border-purple-500/50 rounded-xl font-bold hover:bg-purple-600/30 transition-all focus:outline-none shadow-sm hover:shadow-purple-500/10">
+            <button onClick={manualCategorize} className="px-3 py-2 sm:px-4 sm:py-2.5 bg-purple-600/20 text-purple-400 border border-purple-500/50 rounded-xl font-bold hover:bg-purple-600/30 transition-all focus:outline-none shadow-sm hover:shadow-purple-500/10 text-xs sm:text-sm w-full sm:w-auto">
               Sort Pending
             </button>
           )}
           
-          <div className="flex items-center p-1 bg-slate-900/80 rounded-xl border border-slate-800 shadow-sm">
-            <button className="flex items-center gap-2 hover:bg-slate-800 px-3 py-1.5 rounded-lg focus:outline-none transition-colors text-slate-300 hover:text-white" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="w-4 h-4"/> Files
+          <div className="flex items-center p-1 bg-slate-900/80 rounded-xl border border-slate-800 shadow-sm w-full sm:w-auto justify-between sm:justify-start">
+            <button className="flex items-center gap-1.5 sm:gap-2 hover:bg-slate-800 px-2 sm:px-3 py-1.5 rounded-lg focus:outline-none transition-colors text-slate-300 hover:text-white flex-1 sm:flex-auto justify-center" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4"/> <span className="text-xs sm:text-sm">Files</span>
             </button>
             <div className="w-px h-4 bg-slate-700 mx-1"></div>
-            <button className="flex items-center gap-2 hover:bg-slate-800 px-3 py-1.5 rounded-lg focus:outline-none transition-colors text-slate-300 hover:text-white" onClick={() => folderInputRef.current?.click()}>
-              <FolderArchive className="w-4 h-4"/> Folder
+            <button className="flex items-center gap-1.5 sm:gap-2 hover:bg-slate-800 px-2 sm:px-3 py-1.5 rounded-lg focus:outline-none transition-colors text-slate-300 hover:text-white flex-1 sm:flex-auto justify-center" onClick={() => folderInputRef.current?.click()}>
+              <FolderArchive className="w-3.5 h-3.5 sm:w-4 sm:h-4"/> <span className="text-xs sm:text-sm">Folder</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 hover:bg-sky-900/40 px-4 py-2.5 rounded-xl border border-sky-800/30 focus:outline-none transition-colors text-sky-400 hover:text-sky-300 bg-slate-900/80 font-semibold whitespace-nowrap shadow-sm hover:border-sky-700/50" onClick={handleInstallApp}>
-              <Smartphone className="w-4 h-4"/> Download APK
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button className="flex-1 sm:flex-auto flex items-center justify-center gap-1.5 sm:gap-2 hover:bg-sky-900/40 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-sky-800/30 focus:outline-none transition-colors text-sky-400 hover:text-sky-300 bg-slate-900/80 font-semibold whitespace-nowrap shadow-sm hover:border-sky-700/50 text-[11px] sm:text-sm" onClick={handleInstallApp}>
+              <Smartphone className="w-3.5 h-3.5 sm:w-4 sm:h-4"/> Download APK
             </button>
-            <button className="flex items-center gap-2 hover:bg-red-500/10 px-4 py-2.5 rounded-xl border border-red-500/20 focus:outline-none transition-colors text-red-400 hover:text-red-300 bg-slate-900/80 font-semibold whitespace-nowrap shadow-sm hover:border-red-500/40" onClick={() => { import('./lib/firebase').then(m => m.logout()); }}>
-              <LogOut className="w-4 h-4"/> Log out
+            <button className="flex items-center gap-1.5 sm:gap-2 hover:bg-red-500/10 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-red-500/20 focus:outline-none transition-colors text-red-400 hover:text-red-300 bg-slate-900/80 font-semibold shadow-sm hover:border-red-500/40" onClick={() => { import('./lib/firebase').then(m => m.logout()); }}>
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4"/> <span className="hidden sm:inline">Log out</span>
             </button>
           </div>
           
-          <div className="flex items-center gap-5 bg-slate-900/80 px-5 py-2 rounded-xl border border-slate-800 shadow-sm transition-colors hover:border-slate-700">
-            <div className="flex flex-col justify-center">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-0.5">Loaded</span>
-              <span className="font-extrabold text-white text-base leading-none">{files.length}</span>
+          <div className="flex items-center gap-3 sm:gap-5 bg-slate-900/80 px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl border border-slate-800 shadow-sm transition-colors hover:border-slate-700 w-full sm:w-auto">
+            <div className="flex flex-col justify-center shrink-0">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-0.5">Loaded</span>
+              <span className="font-extrabold text-white text-sm sm:text-base leading-none">{files.length}</span>
             </div>
-            <div className="w-px h-8 bg-slate-800"></div>
-            <div className="flex flex-col justify-center min-w-[100px]">
-              <div className="flex justify-between items-center mb-1.5 text-[10px] font-bold">
-                <span className="uppercase tracking-widest text-slate-500">Mem</span>
+            <div className="w-px h-6 sm:h-8 bg-slate-800 shrink-0"></div>
+            <div className="flex flex-col justify-center flex-grow sm:flex-grow-0 sm:min-w-[100px]">
+              <div className="flex justify-between items-center mb-1 sm:mb-1.5 text-[9px] sm:text-[10px] font-bold gap-3">
+                <span className="uppercase tracking-widest text-slate-500 shrink-0">Mem</span>
                 <span className={
                   (totalMemKb / 1048576) * 100 >= 85 ? "text-red-400" :
                   (totalMemKb / 1048576) * 100 >= 60 ? "text-amber-400" : "text-indigo-400"
                 }>{formatSize(totalMemKb)}</span>
               </div>
-              <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden shadow-inner">
+              <div className="w-full bg-slate-950 rounded-full h-1 sm:h-1.5 overflow-hidden shadow-inner">
                 <div 
                   className={`h-full transition-all duration-500 ${
                     (totalMemKb / 1048576) * 100 >= 85 ? "bg-red-500" :
