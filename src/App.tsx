@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import JSZip from "jszip";
-import { Terminal, Upload, ArrowDownAZ, Download, FolderArchive, Edit3, X, Trash2, Search, Info, Code, FileText, Image, Video, Music, FileJson, LayoutTemplate, File as FileIcon, FolderTree, Folder, FolderSearch, Copy, Check, Zap, Save, Recycle, Timer, Brain, Laptop, Eye, TrendingUp, Tag, Clock, Maximize2, Minimize2, ImageDown, MessageCircle, Send, ArrowRight, Smartphone, LogOut } from "lucide-react";
+import { Terminal, Upload, ArrowDownAZ, Download, FolderArchive, Edit3, X, Trash2, Search, Info, Code, FileText, Image, Video, Music, FileJson, LayoutTemplate, File as FileIcon, FolderTree, Folder, FolderSearch, Copy, Check, Zap, Save, Recycle, Timer, Brain, Laptop, Eye, TrendingUp, Tag, Clock, Maximize2, Minimize2, ImageDown, MessageCircle, Send, ArrowRight, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, RadialBarChart, RadialBar, Legend, PolarAngleAxis } from "recharts";
 
@@ -968,9 +968,6 @@ export default function App() {
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button className="flex-1 sm:flex-auto flex items-center justify-center gap-1.5 sm:gap-2 hover:bg-sky-900/40 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-sky-800/30 focus:outline-none transition-colors text-sky-400 hover:text-sky-300 bg-slate-900/80 font-semibold whitespace-nowrap shadow-sm hover:border-sky-700/50 text-[11px] sm:text-sm" onClick={handleInstallApp}>
               <Smartphone className="w-3.5 h-3.5 sm:w-4 sm:h-4"/> Download APK
-            </button>
-            <button className="flex items-center gap-1.5 sm:gap-2 hover:bg-red-500/10 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-red-500/20 focus:outline-none transition-colors text-red-400 hover:text-red-300 bg-slate-900/80 font-semibold shadow-sm hover:border-red-500/40" onClick={() => { import('./lib/firebase').then(m => m.logout()); }}>
-              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4"/> <span className="hidden sm:inline">Log out</span>
             </button>
           </div>
           
