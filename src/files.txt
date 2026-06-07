@@ -1,0 +1,15 @@
+thesis_final.pdf 1240 2024-11-10
+photo_trip.jpg 3450 2024-08-22
+budget.xlsx 88 2024-12-01
+setup.exe 72000 2024-01-15
+notes_copy.txt 12 2024-10-30
+notes_copy.txt 12 2024-10-31
+main.c 4 2024-12-03
+holiday.mp4 150000 2024-12-25
+song.mp3 5200 2024-10-01
+archive.zip 45000 2024-09-12
+report.docx 450 2024-11-20
+index.html 2 2024-12-05
+style.css 8 2024-12-05
+holiday.mp4 150000 2024-12-26
+photo_trip.jpg 3450 2024-08-22
