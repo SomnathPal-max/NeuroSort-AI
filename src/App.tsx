@@ -5,9 +5,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import JSZip from "jszip";
-import { Terminal, Upload, ArrowDownAZ, Download, FolderArchive, Edit3, X, Trash2, Search, Info, Code, FileText, Image, Video, Music, FileJson, LayoutTemplate, File as FileIcon, FolderTree, Folder, FolderSearch, Copy, Check, Zap, Save, Recycle, Timer, Brain, Laptop, Eye, TrendingUp, Tag, Clock, Maximize2, Minimize2, ImageDown, MessageCircle, Send, ArrowRight, Smartphone } from "lucide-react";
+import { Terminal, Upload, ArrowDownAZ, Download, FolderArchive, Edit3, X, Trash2, Search, Info, Code, FileText, Image, Video, Music, FileJson, LayoutTemplate, File as FileIcon, FolderTree, Folder, FolderSearch, Copy, Check, Zap, Save, Recycle, Timer, Brain, Laptop, Eye, TrendingUp, Tag, Clock, Maximize2, Minimize2, ImageDown, MessageCircle, Send, ArrowRight, Smartphone, FoldHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, RadialBarChart, RadialBar, Legend, PolarAngleAxis } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, RadialBarChart, RadialBar, Legend, PolarAngleAxis, BarChart, Bar } from "recharts";
 
 type FileRecord = {
   filename: string;
@@ -24,6 +24,7 @@ type Benchmark = {
   name: string;
   time: number;
   complexity: string;
+  space: string;
 };
 
 type CategoryWeight = {
@@ -278,10 +279,8 @@ export default function App() {
 
   let displayedFilesWithIdx = files.map((f, idx) => ({ ...f, originalIdx: idx })).filter(f => {
     const matchCategory = filterCategory === "All" || f.category === filterCategory;
-    const matchSearch = f.filename.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchNewest = !showNewestOnly || !f.isOld;
     const matchTrendDate = !trendDateFilter || f.dateStr === trendDateFilter;
-    return matchCategory && matchSearch && matchNewest && matchTrendDate;
+    return matchCategory && matchTrendDate;
   });
 
   if (tableSortCol) {
@@ -369,7 +368,7 @@ export default function App() {
     else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg'].includes(ext)) cat = 'Images';
     else if (['.mp4', '.mkv', '.avi', '.mov', '.wmv'].includes(ext)) cat = 'Videos';
     else if (['.mp3', '.wav', '.aac', '.flac'].includes(ext)) cat = 'Audio';
-    else if (['.c', '.cpp', '.py', '.java', '.js', '.html', '.css', '.ts', '.tsx'].includes(ext)) cat = 'Code';
+    else if (['.c', '.cpp', '.py', '.java', '.js', '.html', '.css', '.ts', '.tsx', '.pl', '.pro'].includes(ext)) cat = 'Code';
     else if (['.zip', '.rar', '.tar', '.gz', '.7z'].includes(ext)) cat = 'Archives';
     else if (['.exe', '.msi', '.apk', '.dmg'].includes(ext)) cat = 'Programs';
     else if (['.xls', '.xlsx', '.csv'].includes(ext)) cat = 'Spreadsheets';
@@ -440,42 +439,121 @@ export default function App() {
     })).sort((a,b) => b.count - a.count);
     setCategories(catArr);
 
-    const runSort = (name: string, complexity: string, fn: (arr: FileRecord[]) => void) => {
-      const arr = [...records];
+    const runSort = (name: string, complexity: string, space: string, fn: (arr: number[]) => void) => {
+      const arr = Array.from({length: 5000}, () => Math.random() * 1000);
       const t0 = performance.now();
       fn(arr);
       const t1 = performance.now();
-      return { name, time: Math.max(0.01, t1 - t0), complexity }; // Ensure min display time
+      return { name, time: Math.max(0.01, t1 - t0), complexity, space }; // Ensure min display time
     };
 
     const bs = [
-      runSort('Bubble Sort', 'O(n²)', (arr) => {
+      runSort('Bubble Sort', 'O(n²)', 'O(1)', (arr) => {
         for(let i=0; i<arr.length; i++) {
           for(let j=0; j<arr.length-i-1; j++) {
-            if(arr[j].sizeKb > arr[j+1].sizeKb) {
+            if(arr[j] > arr[j+1]) {
               const t = arr[j]; arr[j] = arr[j+1]; arr[j+1] = t;
             }
           }
         }
       }),
-      runSort('Selection Sort', 'O(n²)', (arr) => {
+      runSort('Selection Sort', 'O(n²)', 'O(1)', (arr) => {
         for(let i=0; i<arr.length; i++) {
           let min = i;
-          for(let j=i+1; j<arr.length; j++) if(arr[j].sizeKb < arr[min].sizeKb) min = j;
+          for(let j=i+1; j<arr.length; j++) if(arr[j] < arr[min]) min = j;
           const t = arr[i]; arr[i] = arr[min]; arr[min] = t;
         }
       }),
-      runSort('Insertion Sort', 'O(n²)', (arr) => {
+      runSort('Insertion Sort', 'O(n²)', 'O(1)', (arr) => {
         for(let i=1; i<arr.length; i++) {
           let key = arr[i];
           let j = i-1;
-          while(j>=0 && arr[j].sizeKb > key.sizeKb) { arr[j+1] = arr[j]; j--; }
+          while(j>=0 && arr[j] > key) { arr[j+1] = arr[j]; j--; }
           arr[j+1] = key;
         }
       }),
-      runSort('Quick Sort', 'O(n log n)', (arr) => arr.sort((a,b) => a.sizeKb - b.sizeKb)),
-      runSort('Merge Sort', 'O(n log n)', (arr) => arr.sort((a,b) => a.sizeKb - b.sizeKb)),
-      runSort('Radix Sort', 'O(nk)', (arr) => arr.sort((a,b) => a.sizeKb - b.sizeKb))
+      runSort('Heap Sort', 'O(n log n)', 'O(1)', (arr) => {
+         const heapify = (a: number[], n: number, i: number) => {
+            let largest = i;
+            let l = 2*i + 1;
+            let r = 2*i + 2;
+            if (l < n && a[l] > a[largest]) largest = l;
+            if (r < n && a[r] > a[largest]) largest = r;
+            if (largest !== i) {
+               const swap = a[i]; a[i] = a[largest]; a[largest] = swap;
+               heapify(a, n, largest);
+            }
+         };
+         for (let i = Math.floor(arr.length / 2) - 1; i >= 0; i--) heapify(arr, arr.length, i);
+         for (let i = arr.length - 1; i > 0; i--) {
+            const temp = arr[0]; arr[0] = arr[i]; arr[i] = temp;
+            heapify(arr, i, 0);
+         }
+      }),
+      runSort('Quick Sort', 'O(n log n)', 'O(log n)', (arr) => {
+         const quicksort = (a: number[], low: number, high: number) => {
+            if (low < high) {
+               const pivot = a[high];
+               let i = low - 1;
+               for (let j = low; j < high; j++) {
+                  if (a[j] < pivot) {
+                     i++;
+                     const t = a[i]; a[i] = a[j]; a[j] = t;
+                  }
+               }
+               const t2 = a[i + 1]; a[i + 1] = a[high]; a[high] = t2;
+               const pi = i + 1;
+               quicksort(a, low, pi - 1);
+               quicksort(a, pi + 1, high);
+            }
+         };
+         quicksort(arr, 0, arr.length - 1);
+      }),
+      runSort('Merge Sort', 'O(n log n)', 'O(n)', (arr) => {
+         const mergesort = (a: number[], l: number, r: number) => {
+            if (l < r) {
+               const m = Math.floor(l + (r - l) / 2);
+               mergesort(a, l, m);
+               mergesort(a, m + 1, r);
+               const n1 = m - l + 1;
+               const n2 = r - m;
+               const L = new Array(n1);
+               const R = new Array(n2);
+               for (let i = 0; i < n1; i++) L[i] = a[l + i];
+               for (let j = 0; j < n2; j++) R[j] = a[m + 1 + j];
+               let i = 0, j = 0, k = l;
+               while (i < n1 && j < n2) {
+                  if (L[i] <= R[j]) { a[k] = L[i]; i++; }
+                  else { a[k] = R[j]; j++; }
+                  k++;
+               }
+               while (i < n1) { a[k] = L[i]; i++; k++; }
+               while (j < n2) { a[k] = R[j]; j++; k++; }
+            }
+         };
+         mergesort(arr, 0, arr.length - 1);
+      }),
+      runSort('Radix Sort', 'O(nk)', 'O(n+k)', (arr) => {
+         // Radix sort implementation
+         let max = Math.floor(arr[0]);
+         for (let i = 1; i < arr.length; i++) if (Math.floor(arr[i]) > max) max = Math.floor(arr[i]);
+         
+         const countSort = (a: number[], exp: number) => {
+            const output = new Array(a.length);
+            const count = new Array(10).fill(0);
+            for (let i = 0; i < a.length; i++) count[Math.floor(a[i] / exp) % 10]++;
+            for (let i = 1; i < 10; i++) count[i] += count[i - 1];
+            for (let i = a.length - 1; i >= 0; i--) {
+               output[count[Math.floor(a[i] / exp) % 10] - 1] = a[i];
+               count[Math.floor(a[i] / exp) % 10]--;
+            }
+            for (let i = 0; i < a.length; i++) a[i] = output[i];
+         };
+         
+         for (let exp = 1; Math.floor(max / exp) > 0; exp *= 10) {
+            countSort(arr, exp);
+         }
+      })
     ];
     setBenchmarks(bs.sort((a,b) => a.time - b.time));
     
@@ -899,7 +977,7 @@ export default function App() {
         </div>
       )}
       <div 
-        className={`flex flex-col min-h-screen bg-slate-950 text-slate-200 font-sans p-6 md:p-10 overflow-hidden transition-all duration-300 ${isDragging ? 'bg-indigo-950/30 ring-4 ring-inset ring-indigo-500/40' : ''}`}
+        className={`flex flex-col min-h-screen bg-slate-950 text-slate-200 font-sans p-3 sm:p-6 lg:p-8 overflow-hidden transition-all duration-300 ${isDragging ? 'bg-indigo-950/30 ring-4 ring-inset ring-indigo-500/40' : ''}`}
       onDragOver={(e) => { 
         e.preventDefault(); 
         if (e.dataTransfer.types.includes('Files')) {
@@ -999,24 +1077,6 @@ export default function App() {
 
           <div className="flex items-center gap-3 shrink-0 ml-auto xl:ml-0">
             <button 
-              onClick={() => setShowNewestOnly(!showNewestOnly)}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all border flex items-center ${showNewestOnly ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-300 hover:bg-slate-800'}`}
-              title="Show files added in current session only"
-            >
-              <Clock className="w-4 h-4 mr-1.5" />
-              Newest
-            </button>
-            <div className="flex bg-slate-900 border border-slate-800 rounded-xl overflow-hidden items-center px-4 py-2.5 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
-              <Search className="w-4 h-4 text-slate-400" />
-              <input 
-                type="text" 
-                className="bg-transparent border-none px-3 text-sm text-white focus:outline-none placeholder-slate-500 w-48"
-                placeholder="Search filename..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <button 
               onClick={resetApplication} 
               className="px-4 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl hover:bg-red-500/20 font-semibold transition-colors focus:outline-none flex items-center justify-center gap-2"
             >
@@ -1026,8 +1086,71 @@ export default function App() {
         </div>
       </header>
 
+      {/* Prologue */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-6 shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+        <h2 className="text-sm font-bold text-indigo-400 mb-2 uppercase tracking-widest">Prologue</h2>
+        <p className="text-slate-300 text-sm leading-relaxed">
+          Welcome to the NeuroSort AI interface. This application acts as a simulation and analysis dashboard for 
+          file categorization, algorithmic sorting strategy benchmarking, and duplicate redundancy detection. 
+          Upload a sample dataset to begin visual benchmarking of O(n²), O(n log n), and O(nk) sorting complexities.
+          Prolog (.pl, .pro) and various other extensions are fully supported in the Code categorizer.
+        </p>
+      </div>
+
+      {files.length === 0 ? (
+        <div className="bg-[#181C26] border border-slate-800 rounded-3xl overflow-hidden shadow-2xl mx-auto w-full max-w-5xl mt-4 sm:mt-12 flex-grow flex flex-col mb-12">
+          {/* Header Tabs */}
+          <div className="flex border-b border-slate-800">
+            <button className="flex-1 py-5 text-center font-bold text-emerald-400 border-b-[3px] border-emerald-400 flex items-center justify-center gap-2 bg-[#12141A]">
+              <FolderArchive className="w-5 h-5 text-amber-500" /> Upload Files
+            </button>
+            <button disabled className="flex-1 py-5 text-center font-semibold text-slate-500 flex items-center justify-center gap-2 bg-[#181C26] opacity-50 cursor-not-allowed">
+              <Zap className="w-5 h-5 text-rose-500" /> Demo Mode
+            </button>
+          </div>
+          
+          <div className="p-6 sm:p-14 flex flex-col items-center justify-center flex-grow relative">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-20">
+               {isDragging && <div className="w-[500px] h-[500px] bg-emerald-500 rounded-full blur-[120px] animate-pulse"></div>}
+            </div>
+
+            <div className="w-full bg-[#161D2B] text-indigo-200 p-4 rounded-xl mb-12 flex items-center gap-3 border border-slate-800 relative z-10">
+              <Info className="w-5 h-5 text-indigo-400 shrink-0 fill-indigo-400/20" />
+              <span className="text-sm font-medium tracking-wide leading-relaxed text-slate-300">Drop your files or entire folder. Supports JSON reports or any file type for direct browser-side AI classification.</span>
+            </div>
+
+            <div 
+              className={`w-full max-w-2xl flex flex-col items-center justify-center py-16 cursor-pointer rounded-2xl transition-all border-2 border-transparent relative z-10 ${isDragging ? 'bg-[#1C2538]/50 border-emerald-500/50 scale-[1.02]' : 'hover:bg-[#1C2538]/30'}`}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="w-24 h-24 bg-[#1E293B] rounded-full flex items-center justify-center mb-6 shadow-inner border border-slate-700/50 transition-colors relative group">
+                {isDragging && <div className="absolute inset-0 rounded-full border-[3px] border-[#34D399] animate-ping opacity-70" style={{ animationDuration: '1.5s' }}></div>}
+                <div className="w-16 h-16 bg-[#26354D] rounded-full absolute inset-0 m-auto group-hover:scale-110 transition-transform"></div>
+                <Folder className="w-12 h-12 text-amber-400 relative z-10" fill="currentColor" />
+              </div>
+
+              <h2 className="text-2xl font-bold text-white mb-2 text-center pointer-events-none tracking-tight">Drop files or folder here, or click to browse</h2>
+              <p className="text-slate-500 mb-8 font-medium text-[15px] text-center pointer-events-none">JSON report files or any combination of files supported</p>
+              
+              <div className="flex gap-4 text-[11px] font-bold tracking-widest flex-wrap justify-center pointer-events-none">
+                <span className="px-4 py-1.5 text-[#10B981] border border-[#10B981]/40 rounded-full uppercase shadow-[0_0_10px_rgba(16,185,129,0.1)]">JSON Reports</span>
+                <span className="px-4 py-1.5 text-[#8B5CF6] border border-[#8B5CF6]/40 rounded-full uppercase shadow-[0_0_10px_rgba(139,92,246,0.1)]">Any Files</span>
+                <span className="px-4 py-1.5 text-[#F59E0B] border border-[#F59E0B]/40 rounded-full uppercase shadow-[0_0_10px_rgba(245,158,11,0.1)]">Folders</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+      {/* Overview Statistics Label */}
+      <div className="flex items-center gap-4 mb-4 mt-8">
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest shrink-0">Overview Statistics</h2>
+        <div className="h-[1px] bg-slate-800 flex-grow"></div>
+      </div>
+
       {/* Scan Overview / Top Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8 shrink-0">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-6 shrink-0">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-center shadow-xl border-l-4 border-l-amber-500 relative group cursor-help">
           <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><Folder className="w-4 h-4 text-amber-500" /> Scanned Files</span>
           <span className="text-3xl font-extrabold text-slate-100">{files.length}</span>
@@ -1072,12 +1195,208 @@ export default function App() {
         </div>
       </div>
 
+      {/* Directory Maps Section */}
+      <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col mb-8 shrink-0">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 shrink-0 gap-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+              <FolderTree className="w-4 h-4 text-emerald-500" /> Directory Maps
+            </h2>
+            <div className="flex items-center gap-2 border-l border-slate-700 pl-3">
+              <button onClick={() => setIsTreeExpanded(!isTreeExpanded)} className="text-slate-400 hover:text-white hover:bg-slate-800 p-1.5 rounded-lg transition-colors flex items-center gap-1.5 focus:outline-none" title={isTreeExpanded ? "Collapse All" : "Expand All"}>
+                {isTreeExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:block">{isTreeExpanded ? 'Collapse' : 'Expand'}</span>
+              </button>
+              <button onClick={exportDirMapsToPNG} className="text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 p-1.5 rounded-lg transition-colors flex items-center gap-1.5 focus:outline-none" title="Export to PNG">
+                <ImageDown className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:block">Export</span>
+              </button>
+            </div>
+          </div>
+          <div className="relative w-full sm:w-48 shrink-0">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input 
+              type="text" 
+              placeholder="Filter paths..." 
+              value={treeSearchQuery}
+              onChange={e => setTreeSearchQuery(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+            />
+          </div>
+        </div>
+        <div ref={dirMapsRef} className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[400px]">
+          <div className="bg-slate-950 px-4 pt-4 pb-2 rounded-xl border border-slate-800 flex flex-col overflow-hidden relative">
+             <h3 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2 shrink-0 border-b border-slate-800 pb-2">
+               <Folder className="w-4 h-4 text-slate-500" /> Flat Uploads/
+             </h3>
+             <div className="text-xs text-slate-400 font-mono overflow-y-auto h-full pr-2 pb-2" style={{ scrollbarWidth: 'thin' }}>
+               {renderFlatTree()}
+             </div>
+          </div>
+          <div className="bg-slate-950 px-4 pt-4 pb-2 rounded-xl border border-emerald-500/20 flex flex-col overflow-hidden relative">
+             <div className="flex justify-between items-center mb-3 shrink-0 border-b border-slate-800 pb-2">
+               <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                 <FolderSearch className="w-4 h-4 text-emerald-500/70" /> Categorized Files/
+               </h3>
+               {selectedIndices.size > 0 && (
+                 <button onClick={downloadSelection} className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-md transition-colors flex items-center gap-1.5 focus:outline-none">
+                   <Download className="w-3 h-3" /> Download Selection ({selectedIndices.size})
+                 </button>
+               )}
+             </div>
+             <div className="text-xs text-emerald-400/80 font-mono overflow-y-auto h-full pr-2 pb-2" style={{ scrollbarWidth: 'thin' }}>
+               {renderOrgTree()}
+             </div>
+             {categories.length > 0 && (
+               <div className="mt-2 pt-2 border-t border-slate-800/80 text-[10px] flex gap-3 overflow-x-auto shrink-0 hide-scrollbar uppercase font-bold tracking-wider pb-1">
+                 {categories.filter(c => c.name !== 'Pending').map(c => (
+                   <div key={c.name} className="flex gap-1 items-center shrink-0 mix-blend-screen">
+                     <span className={`${getCatColor(c.name).text} opacity-60`}>{c.name}:</span>
+                     <span className="text-slate-300">{formatSize(c.sizeKb)}</span>
+                   </div>
+                 ))}
+               </div>
+             )}
+          </div>
+        </div>
+      </section>
+
+      {/* Algorithm Benchmarks & Analysis Label */}
+      <div className="flex items-center gap-4 mb-6 mt-12">
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest shrink-0">Algorithm Benchmarks & Analysis</h2>
+        <div className="h-[1px] bg-slate-800 flex-grow"></div>
+      </div>
+
+      {/* Benchmarks Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 shrink-0">
+        {/* Benchmark Chart */}
+        <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
+          <h2 className="text-base font-bold text-slate-100 mb-1 flex items-center gap-2">
+            📊 {benchmarks.length}-Algorithm Sorting Benchmark (ms)
+          </h2>
+          <p className="text-slate-400 text-xs mb-8 font-medium">
+            Comparison of O(n²), O(n log n) & O(nk) time complexities across {files.length} file nodes
+          </p>
+          
+          <div className="h-56 sm:h-64 w-full relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={benchmarks} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }}
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#64748b', fontSize: 11 }} 
+                  tickFormatter={(val) => val.toFixed(2).replace(/\.00$/, '')}
+                  label={{ value: 'milliseconds', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11, dy: 30 }}
+                />
+                <Tooltip
+                  cursor={{ fill: '#1e293b', opacity: 0.4 }}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-[#0f172a] border border-slate-700 p-3 rounded-lg shadow-2xl z-50">
+                          <p className="text-white font-bold text-sm mb-2">{label}</p>
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className={`w-3 h-3 rounded-sm ${label === 'Radix Sort' ? 'bg-[#34d399]' : 'bg-[#818cf8]'}`}></div>
+                            <p className="text-slate-300 text-xs font-medium">Time (ms): {payload[0].value.toFixed(3)}</p>
+                          </div>
+                          <p className="text-white text-xs font-bold mb-1 mt-1">Complexity: <span className="text-slate-300 font-medium">{data.complexity}</span></p>
+                          <p className="text-white text-xs font-bold">Space: <span className="text-slate-300 font-medium">{data.space}</span></p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="time" radius={[8, 8, 8, 8]}>
+                  {benchmarks.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.name === 'Radix Sort' ? '#065f46' : '#312e81'} 
+                      stroke={entry.name === 'Radix Sort' ? '#34d399' : '#6366f1'} 
+                      strokeWidth={1}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            {benchmarks.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-slate-500 text-sm font-medium">Waiting for data...</div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Category Weight Chart */}
+        {(() => {
+          const pieCatData = categories.filter(c => c.name !== 'Pending').sort((a,b) => b.sizeKb - a.sizeKb).map(c => ({
+            name: c.name,
+            value: c.sizeKb,
+            fill: tailwindToHex(getCatColor(c.name).bg)
+          }));
+          const hasCats = pieCatData.some(c => c.value > 0);
+          const renderData = hasCats ? pieCatData : [{ name: 'Empty', value: 1, fill: '#1e293b' }];
+          return (
+            <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col pt-6">
+              <h2 className="text-base font-bold text-slate-100 mb-6 flex items-center gap-2">
+                🍩 Category Distribution
+              </h2>
+              <div className="flex-grow flex flex-col sm:flex-row items-center gap-6">
+                <div className="h-48 w-48 sm:h-56 sm:w-56 shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={renderData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius="60%"
+                        outerRadius="80%"
+                        paddingAngle={hasCats ? 2 : 0}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {renderData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      {hasCats && <Tooltip 
+                        formatter={(value: number) => formatSize(value)}
+                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', color: '#e2e8f0' }} 
+                        itemStyle={{ fontSize: '12px', fontWeight: '500' }} 
+                      />}
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex-grow flex flex-col gap-1.5 overflow-y-auto max-h-40 sm:max-h-56 pr-2 w-full sm:w-auto" style={{ scrollbarWidth: 'thin' }}>
+                  {pieCatData.map(c => (
+                    <div key={c.name} className="flex items-center gap-2 text-[11px] font-medium text-slate-400 group">
+                       <span className="w-3 h-3 rounded-[3px] shrink-0" style={{ backgroundColor: c.fill }}></span>
+                       <Folder className="w-3 h-3 text-slate-500 shrink-0 hidden" />
+                       <span className="truncate w-full">{c.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+      </div>
+
       {/* Main Workspace Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 flex-grow min-h-0">
         
         {/* Left Sidebar: Scanned Files */}
         <div className="xl:col-span-8 flex flex-col gap-6 min-h-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
+          <div className="grid grid-cols-1 gap-6 shrink-0">
             {/* Chart 1: Urgency Priorities */}
             {(() => {
               const urgencyCounts = [
@@ -1102,8 +1421,8 @@ export default function App() {
                             cy="100%"
                             startAngle={180}
                             endAngle={0}
-                            innerRadius={60}
-                            outerRadius={100}
+                            innerRadius="60%"
+                            outerRadius="100%"
                             paddingAngle={hasUrgency ? 3 : 0}
                             dataKey="value"
                             stroke="none"
@@ -1129,63 +1448,7 @@ export default function App() {
               );
             })()}
 
-            {/* Chart 2: Category Weight */}
-            {(() => {
-              const pieCatData = categories.filter(c => c.name !== 'Pending').sort((a,b) => b.sizeKb - a.sizeKb).map(c => ({
-                name: c.name,
-                value: c.sizeKb,
-                fill: tailwindToHex(getCatColor(c.name).bg)
-              }));
-              const hasCats = pieCatData.some(c => c.value > 0);
-              const renderData = hasCats ? pieCatData : [{ name: 'Empty', value: 1, fill: '#1e293b' }];
-              return (
-                <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col">
-                  <h2 className="text-sm font-bold text-indigo-400 mb-6 uppercase tracking-wider flex items-center gap-2">
-                    <FolderArchive className="w-4 h-4 text-indigo-400" /> Category Weight
-                  </h2>
-                  <div className="flex-grow flex flex-row items-center gap-6">
-                    <div className="h-48 w-48 shrink-0">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={renderData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={55}
-                            outerRadius={80}
-                            paddingAngle={hasCats ? 2 : 0}
-                            dataKey="value"
-                            stroke="none"
-                          >
-                            {renderData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                          </Pie>
-                          {hasCats && <Tooltip 
-                            formatter={(value: number) => formatSize(value)}
-                            contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', color: '#e2e8f0' }} 
-                            itemStyle={{ fontSize: '12px', fontWeight: '500' }} 
-                          />}
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="flex-grow overflow-y-auto max-h-48 pr-2" style={{ scrollbarWidth: 'thin' }}>
-                      <div className="flex flex-col gap-3">
-                        {pieCatData.map(c => (
-                          <div key={c.name} className="flex items-center gap-3 text-xs font-semibold text-slate-300 group">
-                             <div className="flex items-center gap-2 min-w-[20px]">
-                                <span className="w-6 h-2 rounded-[2px]" style={{ backgroundColor: c.fill }}></span>
-                                <Folder className="w-3 h-3 group-hover:text-indigo-400 opacity-60 transition-colors" style={{color: c.fill}} />
-                             </div>
-                             <span className="truncate w-full">{c.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              );
-            })()}
+
           </div>
 
           <section className={`flex-grow bg-slate-900 border rounded-3xl p-6 md:p-8 overflow-hidden flex flex-col relative transition-colors duration-300 shadow-xl ${isDragging ? 'border-indigo-500 bg-slate-900/90 shadow-[0_0_30px_rgba(99,102,241,0.2)]' : 'border-slate-800'}`}>
@@ -1203,28 +1466,6 @@ export default function App() {
                   Files Scanned
                 </h2>
                 <div className="flex gap-3 flex-wrap">
-                  <div className="relative">
-                    <button onClick={() => setIsColMenuOpen(!isColMenuOpen)} className="hover:bg-slate-800 px-4 py-2 rounded-xl text-slate-300 flex items-center gap-2 transition-colors border border-slate-800 font-medium text-sm focus:outline-none">
-                      <LayoutTemplate className="w-4 h-4"/> Display Settings
-                    </button>
-                    {isColMenuOpen && (
-                      <div className="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-700 shadow-xl rounded-xl p-3 z-50 flex flex-col gap-2">
-                        <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:bg-slate-800 p-2 rounded">
-                          <input type="checkbox" checked={visibleCols.size} onChange={() => setVisibleCols(p => ({...p, size: !p.size}))} className="accent-indigo-500" /> Size
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:bg-slate-800 p-2 rounded">
-                          <input type="checkbox" checked={visibleCols.category} onChange={() => setVisibleCols(p => ({...p, category: !p.category}))} className="accent-indigo-500" /> Category
-                        </label>
-                        <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:bg-slate-800 p-2 rounded">
-                          <input type="checkbox" checked={visibleCols.urgency} onChange={() => setVisibleCols(p => ({...p, urgency: !p.urgency}))} className="accent-indigo-500" /> Urgency
-                        </label>
-                        <div className="border-t border-slate-800 my-1"></div>
-                        <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:bg-slate-800 p-2 rounded">
-                          <input type="checkbox" checked={showIcons} onChange={() => setShowIcons(!showIcons)} className="accent-indigo-500" /> Use Icons
-                        </label>
-                      </div>
-                    )}
-                  </div>
                   <button onClick={exportJSON} className="hover:bg-slate-800 px-4 py-2 rounded-xl text-slate-300 flex items-center gap-2 transition-colors focus:outline-none border border-slate-800 font-medium text-sm">
                     <Download className="w-4 h-4" /> Export Data
                   </button>
@@ -1248,28 +1489,7 @@ export default function App() {
                   >
                     <Trash2 className="w-4 h-4"/> Delete Selected
                   </button>
-                  <div className="flex items-center gap-2 border bg-slate-950 border-slate-800 rounded-xl px-2 opacity-50 focus-within:opacity-100 transition-opacity">
-                    <select 
-                      value={bulkCatEdit}
-                      onChange={e => {
-                        const newCat = e.target.value;
-                        if (!newCat) return;
-                        startGlobalOperation("Reassigning Categories", () => {
-                          const newFiles = [...files];
-                          selectedIndices.forEach(idx => {
-                            newFiles[idx].category = newCat;
-                          });
-                          refreshDerivedData(newFiles, `Reassigned ${selectedIndices.size} files to ${newCat}.`);
-                          setBulkCatEdit("");
-                        });
-                      }}
-                      disabled={selectedIndices.size === 0}
-                      className="bg-transparent border-none text-slate-300 text-sm focus:outline-none cursor-pointer py-2 max-w-[150px]"
-                    >
-                      <option value="">Reassign Category...</option>
-                      {Object.keys(categoryColors).filter(c => c !== 'Pending').map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
+
                 </div>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
@@ -1325,8 +1545,8 @@ export default function App() {
               </div>
             </div>
             <div className="flex-grow flex flex-col min-h-0 overflow-hidden outline-none">
-              <div className="overflow-auto max-h-full w-full text-sm">
-                <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto overflow-y-auto max-h-full w-full text-sm">
+                <table className="w-full text-left border-collapse whitespace-nowrap">
                 <thead className="border-b-2 border-slate-800/80 text-slate-400 sticky top-0 bg-slate-900/95 backdrop-blur z-10 text-xs font-semibold uppercase tracking-wider">
                   <tr>
                     <th className="py-4 px-4 w-12 text-center text-slate-500">
@@ -1349,6 +1569,7 @@ export default function App() {
                     {visibleCols.size && <th className="py-4 px-4">Size</th>}
                     {visibleCols.category && <th className="py-4 px-4">Category</th>}
                     {visibleCols.urgency && <th className="py-4 px-4 text-center">Priority</th>}
+                    <th className="py-4 px-4 text-center">Score</th>
                     <th className="py-4 px-4 w-12"></th>
                   </tr>
                 </thead>
@@ -1409,6 +1630,9 @@ export default function App() {
                           </span>
                         </td>
                       )}
+                      <td className="py-4 px-4 text-center text-slate-300 font-mono text-xs">
+                        {f.priority}/100
+                      </td>
                       <td className="py-4 px-4 text-center">
                          <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                            <button 
@@ -1456,113 +1680,12 @@ export default function App() {
             </div>
           </section>
           
-          <section className="h-48 shrink-0 bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col overflow-auto shadow-xl">
-            <div className="flex justify-between items-center mb-4 shrink-0">
-              <h2 className="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">Duplicate Detection</h2>
-              {duplicates.length > 0 && (
-                <button 
-                  onClick={quickResolveDuplicates} 
-                  className="text-[10px] font-bold uppercase tracking-wider bg-red-500/10 hover:bg-red-500/20 text-red-400 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 focus:outline-none"
-                >
-                  <FolderArchive className="w-3 h-3" /> Quick Resolve
-                </button>
-              )}
-            </div>
-            <div className="text-sm space-y-2">
-              {duplicates.map((d, i) => (
-                <div key={i} className="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-lg border border-red-500/10">
-                  <span className="truncate max-w-[200px] text-slate-300 font-medium" title={d.name}>{d.name}</span>
-                  <span className="text-red-400 shrink-0 text-xs font-semibold bg-red-400/10 px-2 py-1 rounded">Hash: {d.hash}</span>
-                </div>
-              ))}
-              {duplicates.length === 0 && <div className="text-slate-500 flex items-center justify-center h-full pt-4">No collisions recorded.</div>}
-              {duplicates.length > 0 && <div className="mt-4 text-slate-500 font-medium pt-2 border-t border-slate-800">Total: {duplicates.length} duplicates found.</div>}
-            </div>
-          </section>
 
-          <section className="shrink-0 bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 shrink-0 gap-4">
-              <div className="flex items-center gap-3">
-                <h2 className="text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-                  <FolderTree className="w-4 h-4 text-emerald-500" /> Directory Maps
-                </h2>
-                <div className="flex items-center gap-2 border-l border-slate-700 pl-3">
-                  <button onClick={() => setIsTreeExpanded(!isTreeExpanded)} className="text-slate-400 hover:text-white hover:bg-slate-800 p-1.5 rounded-lg transition-colors flex items-center gap-1.5 focus:outline-none" title={isTreeExpanded ? "Collapse All" : "Expand All"}>
-                    {isTreeExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                    <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:block">{isTreeExpanded ? 'Collapse' : 'Expand'}</span>
-                  </button>
-                  <button onClick={exportDirMapsToPNG} className="text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 p-1.5 rounded-lg transition-colors flex items-center gap-1.5 focus:outline-none" title="Export to PNG">
-                    <ImageDown className="w-4 h-4" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:block">Export</span>
-                  </button>
-                </div>
-              </div>
-              <div className="relative w-full sm:w-48 shrink-0">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input 
-                  type="text" 
-                  placeholder="Filter paths..." 
-                  value={treeSearchQuery}
-                  onChange={e => setTreeSearchQuery(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-                />
-              </div>
-            </div>
-            <div ref={dirMapsRef} className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[400px]">
-              <div className="bg-slate-950 px-4 pt-4 pb-2 rounded-xl border border-slate-800 flex flex-col overflow-hidden relative">
-                 <h3 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2 shrink-0 border-b border-slate-800 pb-2">
-                   <Folder className="w-4 h-4 text-slate-500" /> Flat Uploads/
-                 </h3>
-                 <div className="text-xs text-slate-400 font-mono overflow-y-auto h-full pr-2 pb-2" style={{ scrollbarWidth: 'thin' }}>
-                   {renderFlatTree()}
-                 </div>
-              </div>
-              <div className="bg-slate-950 px-4 pt-4 pb-2 rounded-xl border border-emerald-500/20 flex flex-col overflow-hidden relative">
-                 <div className="flex justify-between items-center mb-3 shrink-0 border-b border-slate-800 pb-2">
-                   <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
-                     <FolderSearch className="w-4 h-4 text-emerald-500/70" /> Categorized Files/
-                   </h3>
-                   {selectedIndices.size > 0 && (
-                     <button onClick={downloadSelection} className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-md transition-colors flex items-center gap-1.5 focus:outline-none">
-                       <Download className="w-3 h-3" /> Download Selection ({selectedIndices.size})
-                     </button>
-                   )}
-                 </div>
-                 <div className="text-xs text-emerald-400/80 font-mono overflow-y-auto h-full pr-2 pb-2" style={{ scrollbarWidth: 'thin' }}>
-                   {renderOrgTree()}
-                 </div>
-                 {categories.length > 0 && (
-                   <div className="mt-2 pt-2 border-t border-slate-800/80 text-[10px] flex gap-3 overflow-x-auto shrink-0 hide-scrollbar uppercase font-bold tracking-wider pb-1">
-                     {categories.filter(c => c.name !== 'Pending').map(c => (
-                       <div key={c.name} className="flex gap-1 items-center shrink-0 mix-blend-screen">
-                         <span className={`${getCatColor(c.name).text} opacity-60`}>{c.name}:</span>
-                         <span className="text-slate-300">{formatSize(c.sizeKb)}</span>
-                       </div>
-                     ))}
-                   </div>
-                 )}
-              </div>
-            </div>
-          </section>
         </div>
 
         {/* Right Sidebar: Analytics & Tools */}
         <div className="xl:col-span-4 flex flex-col gap-6 min-h-0 mt-2 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
-          <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
-            <h2 className="text-sm font-bold text-indigo-400 mb-6 uppercase tracking-wider">Sorting Performance (n={files.length})</h2>
-            <div className="grid grid-cols-1 gap-2 text-sm font-medium">
-              {benchmarks.map((b, i) => (
-                <div key={b.name} className={`flex justify-between items-center ${i !== benchmarks.length - 1 ? 'border-b border-slate-800/80' : ''} pb-3 pt-2`}>
-                  <span className="text-slate-200">{b.name}</span>
-                  <span className={i < 3 ? "text-emerald-400 font-bold" : i < 5 ? "text-amber-400 font-bold" : "text-red-400 font-bold"}>
-                    {b.time.toFixed(2)} ms
-                  </span>
-                  <span className="text-slate-500 bg-slate-950 px-2 py-0.5 rounded text-xs">{b.complexity}</span>
-                </div>
-              ))}
-              {benchmarks.length === 0 && <div className="text-slate-500 text-center pt-4">Waiting for data...</div>}
-            </div>
-          </section>
+
 
           <section className="shrink-0 bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col shadow-xl">
             <h2 className="text-sm font-bold text-indigo-400 mb-6 uppercase tracking-wider shrink-0 flex items-center gap-2">Category Distribution</h2>
@@ -1725,59 +1848,40 @@ export default function App() {
              </div>
           </section>
 
-          <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 h-64 shrink-0 flex flex-col items-stretch shadow-xl">
-            <h2 className="text-sm font-bold text-amber-500 mb-4 uppercase tracking-wider shrink-0 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                Scan Trends (30d) <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-              </div>
-              {trendDateFilter && (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setTrendDateFilter(null); }}
-                  className="bg-amber-500/20 text-amber-400 border border-amber-500/50 px-2 py-0.5 rounded text-[10px] lowercase flex items-center gap-1 hover:bg-amber-500/30 transition-colors focus:outline-none"
-                >
-                  <X className="w-3 h-3" /> {trendDateFilter}
-                </button>
-              )}
-            </h2>
-            <div className="flex-grow relative">
-              <div className="absolute inset-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart 
-                    data={trendData} 
-                    margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
-                    onClick={(e: any) => {
-                      if (e && e.activePayload && e.activePayload.length > 0) {
-                        const clickedDate = e.activePayload[0].payload.date;
-                        setTrendDateFilter(prev => prev === clickedDate ? null : clickedDate);
-                      }
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <defs>
-                      <linearGradient id="colorDocs" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="colorCode" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', fontSize: '12px', color: '#e2e8f0', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }} 
-                      itemStyle={{ fontSize: '12px', fontWeight: '500' }} 
-                      cursor={{ stroke: '#334155', strokeWidth: 1, strokeDasharray: '4 4' }}
-                    />
-                    <Area type="monotone" dataKey="Documents" stackId="1" stroke="#6366f1" strokeWidth={2} fill="url(#colorDocs)" />
-                    <Area type="monotone" dataKey="Code" stackId="1" stroke="#a855f7" strokeWidth={2} fill="url(#colorCode)" />
-                    <Area type="monotone" dataKey="Images" stackId="1" stroke="#10b981" strokeWidth={2} fill="#10b981" fillOpacity={0.1} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </section>
+
         </div>
       </div>
+
+      {/* Duplicate Detection Full Width */}
+      <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col shadow-xl shrink-0 mt-8">
+        <div className="flex justify-between items-center mb-6 shrink-0 border-b border-slate-800 pb-4">
+          <h2 className="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
+             <FoldHorizontal className="w-5 h-5 text-red-500" /> Duplicate Detection
+          </h2>
+          {duplicates.length > 0 && (
+            <button 
+              onClick={quickResolveDuplicates} 
+              className="text-[11px] font-bold uppercase tracking-wider bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 focus:outline-none"
+            >
+              <FolderArchive className="w-4 h-4" /> Quick Resolve ({duplicates.length})
+            </button>
+          )}
+        </div>
+        <div className="text-sm">
+          {duplicates.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-80 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+              {duplicates.map((d, i) => (
+                <div key={i} className="flex flex-col gap-2 bg-slate-950 p-4 rounded-xl border border-red-500/10 hover:border-red-500/30 transition-colors">
+                  <span className="truncate text-slate-300 font-semibold" title={d.name}>{d.name}</span>
+                  <span className="text-red-400 text-xs font-mono bg-red-400/5 px-2 py-1 rounded w-max">Hash: {d.hash}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-slate-500 flex items-center justify-center p-8 bg-slate-950/50 rounded-xl border border-slate-800/50 border-dashed">No collisions recorded in the current scan block.</div>
+          )}
+        </div>
+      </section>
 
       {/* Bottom Status Footer */}
       <footer className="mt-8 flex flex-wrap items-center justify-between text-sm font-medium bg-slate-900/60 backdrop-blur-md p-5 rounded-2xl border border-slate-800 shadow-lg gap-6">
@@ -1861,6 +1965,7 @@ export default function App() {
                 <span className="px-3 py-1.5 bg-slate-950 rounded-full border border-slate-700 shadow-inner flex items-center gap-2"><Code className="w-4 h-4 text-emerald-400"/> C Language</span>
                 <span className="px-3 py-1.5 bg-slate-950 rounded-full border border-slate-700 shadow-inner flex items-center gap-2"><FolderTree className="w-4 h-4 text-sky-400"/> Data Structure and Algorithms</span>
                 <span className="px-3 py-1.5 bg-slate-950 rounded-full border border-slate-700 shadow-inner flex items-center gap-2"><Brain className="w-4 h-4 text-pink-400"/> Artificial Intelligence</span>
+                <span className="px-3 py-1.5 bg-slate-950 rounded-full border border-slate-700 shadow-inner flex items-center gap-2"><Code className="w-4 h-4 text-fuchsia-400"/> Prolog</span>
               </div>
             </div>
 
@@ -1905,6 +2010,8 @@ export default function App() {
           </div>
         </div>
       </div>
+        </>
+      )}
 
       {/* Batch Rename Modal */}
       {isRenameModalOpen && (
