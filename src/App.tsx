@@ -440,11 +440,11 @@ export default function App() {
     setCategories(catArr);
 
     const runSort = (name: string, complexity: string, space: string, fn: (arr: number[]) => void) => {
-      const arr = Array.from({length: 5000}, () => Math.random() * 1000);
+      const arr = Array.from({length: 100}, () => Math.random() * 1000);
       const t0 = performance.now();
       fn(arr);
       const t1 = performance.now();
-      return { name, time: Math.max(0.01, t1 - t0), complexity, space }; // Ensure min display time
+      return { name, time: Math.max(0.005, t1 - t0), complexity, space }; // Ensure min display time
     };
 
     const bs = [
@@ -1269,67 +1269,26 @@ export default function App() {
 
       {/* Benchmarks Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6 shrink-0">
-        {/* Benchmark Chart */}
-        <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl">
-          <h2 className="text-base font-bold text-slate-100 mb-1 flex items-center gap-2">
-            📊 {benchmarks.length}-Algorithm Sorting Benchmark (ms)
+        {/* Benchmark List */}
+        <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col">
+          <h2 className="text-sm font-bold text-indigo-400 mb-6 uppercase tracking-wider">
+            Sorting Performance (N={files.length})
           </h2>
-          <p className="text-slate-400 text-xs mb-8 font-medium">
-            Comparison of O(n²), O(n log n) & O(nk) time complexities across {files.length} file nodes
-          </p>
           
-          <div className="h-56 sm:h-64 w-full relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={benchmarks} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }}
-                  dy={10}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#64748b', fontSize: 11 }} 
-                  tickFormatter={(val) => val.toFixed(2).replace(/\.00$/, '')}
-                  label={{ value: 'milliseconds', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 11, dy: 30 }}
-                />
-                <Tooltip
-                  cursor={{ fill: '#1e293b', opacity: 0.4 }}
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="bg-[#0f172a] border border-slate-700 p-3 rounded-lg shadow-2xl z-50">
-                          <p className="text-white font-bold text-sm mb-2">{label}</p>
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className={`w-3 h-3 rounded-sm ${label === 'Radix Sort' ? 'bg-[#34d399]' : 'bg-[#818cf8]'}`}></div>
-                            <p className="text-slate-300 text-xs font-medium">Time (ms): {payload[0].value.toFixed(3)}</p>
-                          </div>
-                          <p className="text-white text-xs font-bold mb-1 mt-1">Complexity: <span className="text-slate-300 font-medium">{data.complexity}</span></p>
-                          <p className="text-white text-xs font-bold">Space: <span className="text-slate-300 font-medium">{data.space}</span></p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="time" radius={[8, 8, 8, 8]}>
-                  {benchmarks.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.name === 'Radix Sort' ? '#065f46' : '#312e81'} 
-                      stroke={entry.name === 'Radix Sort' ? '#34d399' : '#6366f1'} 
-                      strokeWidth={1}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="flex-grow flex flex-col justify-center gap-3">
+            {benchmarks.map((entry, index) => (
+              <div key={index} className="flex items-center justify-between bg-[#131722]/50 p-4 rounded-xl border border-slate-800/80 hover:bg-[#1e2436]/50 transition-colors">
+                <span className="text-slate-200 font-semibold text-sm">{entry.name}</span>
+                <span className={`font-mono font-bold text-sm ${entry.name === 'Quick Sort' || entry.name === 'Merge Sort' || entry.name === 'Radix Sort' ? 'text-emerald-400' : 'text-indigo-200'}`}>
+                  {entry.time.toFixed(3)} ms
+                </span>
+                <span className="text-xs font-medium text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-md border border-slate-700 font-mono">
+                  {entry.complexity}
+                </span>
+              </div>
+            ))}
             {benchmarks.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="flex-grow flex items-center justify-center">
                 <div className="text-slate-500 text-sm font-medium">Waiting for data...</div>
               </div>
             )}
